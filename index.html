@@ -37,42 +37,58 @@
 
     <script>
         const URL = "http://localhost:8000"
-
         const map = L.map('map').setView([50.4372, 15.3516], 13); // Jičín
+        let currentController = null;
 
         L.tileLayer(
             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             {
                 attribution: '&copy; OpenStreetMap contributors',
-                maxZoom: 19
+                maxZoom: 22
             }
         ).addTo(map);
 
         setTimeout(() => map.invalidateSize(), 100);
 
-        map.on('moveend', async () => {
-            onMove();
-        });
+        map.on('moveend', function () { onMove(); });
 
-        function onMove() {
-            const bounds = map.getBounds();
+        async function onMove() {
+            if (currentController) {
+                currentController.abort();
+            }
 
-            nelat = bounds._northEast.lat;
-            nelng = bounds._northEast.lng;
+            currentController = new AbortController();
 
-            swlat = bounds._southWest.lat;
-            swlng = bounds._southWest.lng;
+            try {
+                const bounds = map.getBounds();
 
-            let xmlHttp = new XMLHttpRequest();
-            xmlHttp.open("GET", URL + `/parcel?area=${swlng},${swlat},${nelng},${nelat}`, true);
-            xmlHttp.onload = drawParcels;
-            xmlHttp.send(null);
+                nelat = bounds._northEast.lat;
+                nelng = bounds._northEast.lng;
+
+                swlat = bounds._southWest.lat;
+                swlng = bounds._southWest.lng;
+
+                const response = await fetch(
+                    URL + `/parcel?area=${swlng},${swlat},${nelng},${nelat}`,
+                    {signal: currentController.signal}
+                );
+
+                const obj = await response.json(); 
+                console.log(obj);
+                drawParcels(obj);
+            } catch (e) {
+                if (e.name === "AbortError") {
+                    console.log("abort");
+                    return;
+                }
+
+                console.error(e);
+            }
         }
 
-        function drawParcels() {
-            L.geoJSON(JSON.parse(this.responseText), {
+        function drawParcels(obj) {
+            L.geoJSON(obj, {
                 onEachFeature(feature, layer) {
-
                     layer.on('click', e => onParcelClick(e));
                 }
             }).addTo(map);
