@@ -14,6 +14,8 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <script>
+        const URL = "http://localhost:8000"
+
         const map = L.map('map').setView([50.4372, 15.3516], 13); // Jičín
 
         L.tileLayer(
@@ -25,6 +27,46 @@
         ).addTo(map);
 
         setTimeout(() => map.invalidateSize(), 100);
+
+        map.on('moveend', async () => {
+            onMove();
+        });
+
+        function onMove() {
+            const bounds = map.getBounds();
+
+            nelat = bounds._northEast.lat;
+            nelng = bounds._northEast.lng;
+
+            swlat = bounds._southWest.lat;
+            swlng = bounds._southWest.lng;
+
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.open("GET", URL + `/parcel?area=${swlng},${swlat},${nelng},${nelat}`, true);
+            xmlHttp.onload = drawParcels;
+            xmlHttp.send(null);
+        }
+
+        function drawParcels() {
+            L.geoJSON(JSON.parse(this.responseText), {
+                onEachFeature(feature, layer) {
+
+                    layer.on('click', e => onParcelClick(e));
+                }
+            }).addTo(map);
+        }
+
+        function onParcelClick(e) {
+            const id = e.target.feature.properties.id;
+
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", URL + `/parcel/${id}`, true );
+            xmlHttp.onload = function () {
+                alert(this.responseText);
+            };
+
+            xmlHttp.send(null); 
+        }
     </script>
 </body>
 </html>
