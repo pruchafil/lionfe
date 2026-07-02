@@ -9,6 +9,28 @@
 <link rel="stylesheet" href="style.css">
 
 <body>
+    <dialog id="parcelInfo">
+        <b>GLM_ID:</b>
+        <p id="glm_id"></p>
+
+        <b>National cadastral reference:</b>
+        <p id="ku_ref"></p>
+
+        <b>Cadastral unit code:</b>
+        <p id="ku_code"></p>
+
+        <b>Cadastral unit name:</b>
+        <p id="ku_name"></p>
+
+        <b>Parcel number:</b>
+        <p id="parc_num"></p>
+
+        <b>Area (m^2):</b>
+        <p id="area"></p>
+
+        <button onclick="document.getElementById('parcelInfo').close()">OK</button>
+    </dialog>
+
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -62,7 +84,16 @@
             let xmlHttp = new XMLHttpRequest();
             xmlHttp.open( "GET", URL + `/parcel/${id}`, true );
             xmlHttp.onload = function () {
-                alert(this.responseText);
+                object = JSON.parse(this.responseText);
+
+                document.getElementById("glm_id").innerText = object.gmlId;
+                document.getElementById("ku_ref").innerText = object.nationalCadastralReference;
+                document.getElementById("ku_code").innerText = object.cadastralUnitCode;
+                document.getElementById("ku_name").innerText = object.cadastralUnitName;
+                document.getElementById("parc_num").innerText = object.parcelNumber;
+                document.getElementById("area").innerText = object.areaM2;
+
+                document.getElementById("parcelInfo").showModal();
             };
 
             xmlHttp.send(null); 
