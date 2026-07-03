@@ -39,6 +39,7 @@
         const URL = "http://localhost:8000"
         const map = L.map('map').setView([50.4372, 15.3516], 13); // Jičín
         let currentController = null;
+        let currentLayer = null;
 
         L.tileLayer(
             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -87,11 +88,19 @@
         }
 
         function drawParcels(obj) {
-            L.geoJSON(obj, {
+            const newLayer = L.geoJSON(obj, {
                 onEachFeature(feature, layer) {
                     layer.on('click', e => onParcelClick(e));
                 }
-            }).addTo(map);
+            });
+
+            if (currentLayer !== null) {
+                map.removeLayer(currentLayer);
+            }
+
+            newLayer.addTo(map);
+            currentLayer = newLayer;
+
         }
 
         function onParcelClick(e) {
